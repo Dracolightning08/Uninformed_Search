@@ -1,3 +1,6 @@
+'''-------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                    Imports and Modules:
+-------------------------------------------------------------------------------------------------------------------------------------------------------'''
 # robby_search.py
 # Use breadth-first search (BFS) to help Robby the Robot pick up cans without running out of battery.
 
@@ -8,7 +11,9 @@ from queue import Queue
 from robby.graphics import *
 from robby import World
 import time
-
+'''-------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                    Argparse Arguments:
+--------------------------------------------------------------------------------------------------------------------------------------------------------'''
 # Use argparse to allow user to enter command line arguments for:
 #   *file - a text file containing the world design (required)
 #   *actions - a string defining the order of actions to search (optional, default='GNESW')
@@ -32,7 +37,9 @@ actions = args.actions
 battery = args.battery
 verbose = args.verbose
 
-
+'''-------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                    Main Method:
+--------------------------------------------------------------------------------------------------------------------------------------------------------'''
 def main(file, actions, battery, verbose):
     # Read world parameters (size, location of Robby, and contents) from file
     #***EDIT CODE HERE***
@@ -94,7 +101,9 @@ def main(file, actions, battery, verbose):
                 for action in path:
                     pass
 
-
+'''-------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                    Breadth First Search Method :
+--------------------------------------------------------------------------------------------------------------------------------------------------------'''
 def bfs(rw, state, actions, verbose=False):
     '''Perform breadth-first search on the world state given an ordered string of actions to check (e.g. 'GNESW').'''
     #***EDIT CODE HERE***
@@ -104,7 +113,9 @@ def bfs(rw, state, actions, verbose=False):
     if verbose: print('--> searched {} paths'.format(cnt))
 
     return path
-
+'''-------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                    Is Solved Method:
+--------------------------------------------------------------------------------------------------------------------------------------------------------'''
 def issolved(rw, state, path):
     '''Check whether a series of actions (path) taken in Robby's world results in a solved problem.'''
     rows, cols = rw.numRows, rw.numCols # size of the world
@@ -125,7 +136,9 @@ def issolved(rw, state, path):
             return True
 
     return False # if we made it this far, we did not complete the goal
-
+'''-------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                    Is Valid Method:
+--------------------------------------------------------------------------------------------------------------------------------------------------------'''
 def isvalid(rw, state, path):
     '''Check whether a series of actions (path) taken in Robby's world is valid.'''
     rows, cols = rw.numRows, rw.numCols  # size of the maze
