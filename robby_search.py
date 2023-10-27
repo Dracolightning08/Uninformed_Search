@@ -16,7 +16,21 @@ import time
 #   *verbose - a flag to display details about the search
 parser = argparse.ArgumentParser(description="Use breadth-first search (BFS) to help Robby the Robot pick up cans without running out of battery")
 #***EDIT CODE HERE***
+parser.parse_args() # call argparse
+# Create the argument for the world design file
+parser.add_argument("file", help="A text file containing the world design")
+# Create the argument for the actions in the world
+parser.add_argument("--actions", default="GNESW", help="Order of actions to search")
+# Create the argument for default battery for Robby
+parser.add_argument("--battery", type=int, default=7, help="Full battery power")
+# Create the argument for the flags to display details regarding the search
+parser.add_argument("--verbose", action="store_true", help="Display details about the search")
+args = parser.parse_args()
 
+world_file = args.file
+actions = args.actions
+battery = args.battery
+verbose = args.verbose
 
 
 def main(file, actions, battery, verbose):
