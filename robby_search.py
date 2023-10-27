@@ -32,9 +32,13 @@ parser.add_argument("--battery", type=int, default=7, help="Full battery power")
 parser.add_argument("--verbose", action="store_true", help="Display details about the search")
 args = parser.parse_args()
 
+# Assign the value of the command-line with an argument composing of the name world_file.
 world_file = args.file
+# Assigns the value of the command-line with name actions containing instructions on what to do
 actions = args.actions
+# Assigns the value of the command-line with the name battery and with the total battery life.
 battery = args.battery
+# Assigns the argument verbose to whatever being flagged
 verbose = args.verbose
 
 '''-------------------------------------------------------------------------------------------------------------------------------------------------------
