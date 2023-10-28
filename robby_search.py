@@ -21,7 +21,7 @@ import time
 #   *verbose - a flag to display details about the search
 parser = argparse.ArgumentParser(description="Use breadth-first search (BFS) to help Robby the Robot pick up cans without running out of battery")
 #***EDIT CODE HERE***
-parser.parse_args() # call argparse
+#parser.parse_args() # call argparse CHECK LATER commented this out bc it wasn't accepting the args with it
 # Create the argument for the world design file
 parser.add_argument("file", help="A text file containing the world design")
 # Create the argument for the actions in the world
@@ -46,21 +46,58 @@ verbose = args.verbose
 --------------------------------------------------------------------------------------------------------------------------------------------------------'''
 def main(file, actions, battery, verbose):
     # Read world parameters (size, location of Robby, and contents) from file
-    #***EDIT CODE HERE***
-    rows, cols = 1, 1
-    r0, c0 = 0, 0
-    contents = 'E'
+
+    # open the file
+    f = open(file, "r")
+    # read the rows and cols
+    rowsandcols = f.readline()
+    rowsandcols = rowsandcols.split()
+    # Define the size of Robby's World
+    rows = int(rowsandcols[0])
+    cols = int(rowsandcols[1])
+
+    # Read robby's starting coordinates
+    rc = f.readline()
+    rc = rc.split()
+    # Define robby's starting coordinates
+    #r0 = row coordinate
+    #c0 = col coordinate
+    r0 = int(rc[0])
+    c0 = int(rc[1])
+
+    # Define the string that populates Robby's World as one line
+    contents = f.read().replace('\n', '').replace('.', 'E')
+
+    f.close()
+
+    #***START EICHOLTZ CODE***
+    # #***EDIT CODE HERE***
+    # rows, cols = 1, 1
+    # r0, c0 = 0, 0
+    # contents = 'E'
+    #***END EICHOLTZ CODE***
 
     # Create Robby's world
     #***EDIT CODE HERE***
     rw = World(rows, cols)
+    # Populate the world with walls, cans, and batteries
+    rw.load(contents)
+    # Put robby in his designated spot
+    rw.goto(r0, c0)
+    # Set the full battery level
+    rw.setFullBattery(battery)
+    #Turn on Robby's World
     rw.graphicsOn()
+    #***END EDIT CODE HERE***
 
     # Play in Robby's world
     path = ''
     while True:
         # Check to see if Robby has picked up all the cans
-        if False:  #***EDIT CODE HERE***
+        cons = rw._gridContents()
+        #***EDIT CODE HERE***
+        if not cons.__contains__("C"): 
+            #***END EDIT CODE HERE*** 
             rw.graphicsOff("Robby wins!")
 
         # Handle key presses
@@ -102,6 +139,7 @@ def main(file, actions, battery, verbose):
                 time.sleep(0.5)
 
                 # ***EDIT CODE HERE***
+                # this is part (h) on the hw document
                 for action in path:
                     pass
 
