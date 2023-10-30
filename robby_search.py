@@ -20,7 +20,7 @@ import time
 #   *battery - an integer defining the full battery power (optional, default=7)
 #   *verbose - a flag to display details about the search
 parser = argparse.ArgumentParser(description="Use breadth-first search (BFS) to help Robby the Robot pick up cans without running out of battery")
-#***EDIT CODE HERE***
+#***EDIT CODE HERE*** part a
 #parser.parse_args() # call argparse CHECK LATER commented this out bc it wasn't accepting the args with it
 # Create the argument for the world design file
 parser.add_argument("file", help="A text file containing the world design")
@@ -46,7 +46,7 @@ verbose = args.verbose
 --------------------------------------------------------------------------------------------------------------------------------------------------------'''
 def main(file, actions, battery, verbose):
     # Read world parameters (size, location of Robby, and contents) from file
-
+    # part b
     # open the file
     f = open(file, "r")
     # read the rows and cols
@@ -70,15 +70,10 @@ def main(file, actions, battery, verbose):
 
     f.close()
 
-    #***START EICHOLTZ CODE***
-    # #***EDIT CODE HERE***
-    # rows, cols = 1, 1
-    # r0, c0 = 0, 0
-    # contents = 'E'
-    #***END EICHOLTZ CODE***
+    
 
     # Create Robby's world
-    #***EDIT CODE HERE***
+    #***EDIT CODE HERE*** part c
     rw = World(rows, cols)
     # Populate the world with walls, cans, and batteries
     rw.load(contents)
@@ -95,7 +90,7 @@ def main(file, actions, battery, verbose):
     while True:
         # Check to see if Robby has picked up all the cans
         cons = rw._gridContents()
-        #***EDIT CODE HERE***
+        #***EDIT CODE HERE*** part d
         if not cons.__contains__("C"): 
             #***END EDIT CODE HERE*** 
             rw.graphicsOff("Robby wins!")
@@ -148,9 +143,39 @@ def main(file, actions, battery, verbose):
 --------------------------------------------------------------------------------------------------------------------------------------------------------'''
 def bfs(rw, state, actions, verbose=False):
     '''Perform breadth-first search on the world state given an ordered string of actions to check (e.g. 'GNESW').'''
-    #***EDIT CODE HERE***
+    #***EDIT CODE HERE*** part e
     cnt = 0 # counter to see how long the search took
-    path = ''
+    path = '' # initialize the path string
+
+    # initialize the queue
+    q = Queue()
+    # list of visited nodes
+    visited_nodes = []
+    # backpointers
+    backpointers = dict.fromkeys() #EDIT not sure how we are meant to make the backpointers
+
+    # add starting node to queue
+    # Each node is represented by a tuple (of coordinates)
+    q.put((rw.r0, rw.c0))
+    visited_nodes.append((rw.r0, rw.c0))
+
+#     function BFS(problem) returns a solution/failure
+#         ###initialize queue, list of visited nodes, and backpointers
+#         add starting node to queue and visited nodes
+#         loop
+            # if there are no nodes for expansion then return failure
+            # pop the first node from the queue
+            # if node contains goal state then return solution
+            # for each available action
+                # determine child node for given action
+                # if child node is not in visited nodes
+                    # add child node to queue and visited node
+                    # add parent node as backpointer to child node
+
+
+
+
+
 
     if verbose: print('--> searched {} paths'.format(cnt))
 
@@ -160,6 +185,7 @@ def bfs(rw, state, actions, verbose=False):
 --------------------------------------------------------------------------------------------------------------------------------------------------------'''
 def issolved(rw, state, path):
     '''Check whether a series of actions (path) taken in Robby's world results in a solved problem.'''
+    # part f
     rows, cols = rw.numRows, rw.numCols # size of the world
     row, col = rw.getCurrentPosition() # Robby's current (starting) position
     state = list(state) # convert the string to a list so we can update it
@@ -167,10 +193,9 @@ def issolved(rw, state, path):
 
     #***EDIT CODE HERE***
     for action in path:
-        pass
 
         # Did Robby run out of battery?
-        if battery <= 0:
+        if rw.batteryLife <= 0:
             return False
 
         # Did Robby grab all the cans?
@@ -183,6 +208,7 @@ def issolved(rw, state, path):
 --------------------------------------------------------------------------------------------------------------------------------------------------------'''
 def isvalid(rw, state, path):
     '''Check whether a series of actions (path) taken in Robby's world is valid.'''
+    # part g
     rows, cols = rw.numRows, rw.numCols  # size of the maze
     row, col = rw.getCurrentPosition()  # robby's current (starting) position
     state = list(state)
@@ -191,18 +217,26 @@ def isvalid(rw, state, path):
 
     #***EDIT CODE HERE***
     for action in path:
-        pass
+        #convert action
+        if action == "N":
+            action = 'North'
+        elif action == "E":
+            action = 'East'
+        elif action == "S":
+            action = 'South'
+        elif action == "W":
+            action = "West"
         
         # Path is invalid if Robby has run out of battery
-        if False: # ***EDIT CODE HERE***
+        if rw.batteryLife <= 0: # ***EDIT CODE HERE***
             return False
 
         # Path is invalid if Robby's goes "out of bounds"
-        if False: # ***EDIT CODE HERE***
+        if row > rows or row < 0 or col > cols or col < 0: # ***EDIT CODE HERE***
             return False
 
         # Path is invalid if Robby runs into a wall
-        if False: # ***EDIT CODE HERE***
+        if rw.getPercept()[action] == 'W': # ***EDIT CODE HERE***
             return False
 
         # Path is invalid if robby repeats a state in memory
