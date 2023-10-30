@@ -129,13 +129,17 @@ def main(file, actions, battery, verbose):
             elif key == "Return":
                 # Use the discovered path (from bfs) to actually move robby through
                 # the world! Add a small time delay with time.sleep() so that robby does not move too fast.
+                print("yippee")
                 rw.reset()
                 rw.goto(r0, c0)
                 time.sleep(0.5)
+                bfs(rw, rw.getState(), actions, verbose=True)
 
                 # ***EDIT CODE HERE***
                 # this is part (h) on the hw document
                 for action in path:
+                    # if letter is N
+                    # moveNorth()
                     pass
 
 '''-------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -146,36 +150,87 @@ def bfs(rw, state, actions, verbose=False):
     #***EDIT CODE HERE*** part e
     cnt = 0 # counter to see how long the search took
     path = '' # initialize the path string
-
+    
     # initialize the queue
     q = Queue()
     # list of visited nodes
     visited_nodes = []
-    # backpointers
-    backpointers = dict.fromkeys() #EDIT not sure how we are meant to make the backpointers
 
     # add starting node to queue
     # Each node is represented by a tuple (of coordinates)
-    q.put((rw.r0, rw.c0))
-    visited_nodes.append((rw.r0, rw.c0))
+    q.put((rw.robbyRow, rw.robbyCol, 'R'))
+    visited_nodes.append((rw.robbyRow, rw.robbyCol))
+    
+    # while q is not empty
+    while q:
+        print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+        # if there are no nodes for expansion then return failure
+        if q.empty():
+            return 'failure'
+        
+        #pop the first node from the queue
+        node = q.get()
 
-#     function BFS(problem) returns a solution/failure
-#         ###initialize queue, list of visited nodes, and backpointers
-#         add starting node to queue and visited nodes
-#         loop
-            # if there are no nodes for expansion then return failure
-            # pop the first node from the queue
-            # if node contains goal state then return solution
+        # if node contains goal state then return solution
+        if issolved(rw, rw.getState(), path):
+            return path
+
+        percept = rw.getPercept() # get the contents of the spaces around robby
+        directions = list(percept.keys()) # robby, north, west, east, south
+        
+        # for each available action
+        for move in directions:
             # for each available action
-                # determine child node for given action
-                # if child node is not in visited nodes
-                    # add child node to queue and visited node
-                    # add parent node as backpointer to child node
+            # "GNWES"
+            for act in actions:
+                
+                
+                print(move)
+                print(act)
+                nextnode = percept[move] # eg: percept['Robby'] will get the contents of the grid block where robby is sitting
+                # grab cans and batteries
+                
+                if move == "Robby" and (nextnode == "C" or nextnode == "B"):
+                    print('ROBBY IS GRABBING GGGGGGGGGGGGGGGGGGGGGGG')
+                    # append grab bc there is something to grab
+                    # he has not moved since he grabbed
+                    if isvalid(rw, state, node[2]):
+                        q.put((rw.robbyRow, rw.robbyCol, node[2] + "G"))
+                        visited_nodes.append((rw.robbyRow, rw.robbyCol))
+                        rw.grid[rw.RobbyRow][rw.RobbyRow] = "E"
 
+                else:
+                    if isvalid(rw, state, node[2]):
+                        # move the robby's coordinates and put him on the queue for moving
+                        q.put((rw.robbyRow, rw.robbyCol, node[2] + act))
+                        visited_nodes.append((rw.robbyRow, rw.robbyCol))
+                        rr0 = rw.robbyRow
+                        rc0 = rw.robbyCol
+                        if act == "N":
+                            rc0 += 1
+                        elif act == "E":
+                            rr0 += 1
+                        elif act == "S":
+                            rc0 -= 1
+                        elif act == "W":
+                            rr0 -= 1
+                        
+                        # if the visited nodes list contains the tuple of coordinates that we are trying to move to
+                        if ((rr0, rc0) in visited_nodes):
+                                print()
+                                continue
+                        else:
+                            q.put((rr0, rc0, node[2] + act))
+                            visited_nodes.append((rr0, rc0))
 
+                
+                path = node[2]
+                cnt += 1
+                if cnt == 10:
+                    return "sob"
+                if verbose: print('--> searched {} paths'.format(cnt))
 
-
-
+                    
 
     if verbose: print('--> searched {} paths'.format(cnt))
 
@@ -226,7 +281,9 @@ def isvalid(rw, state, path):
             action = 'South'
         elif action == "W":
             action = "West"
-        
+        else:
+            continue
+    
         # Path is invalid if Robby has run out of battery
         if rw.batteryLife <= 0: # ***EDIT CODE HERE***
             return False
