@@ -129,7 +129,7 @@ def main(file, actions, battery, verbose):
             elif key == "Return":
                 # Use the discovered path (from bfs) to actually move robby through
                 # the world! Add a small time delay with time.sleep() so that robby does not move too fast.
-                print("yippee")
+                print("yippee (return was pressed)")
                 rw.reset()
                 rw.goto(r0, c0)
                 time.sleep(0.5)
@@ -163,73 +163,104 @@ def bfs(rw, state, actions, verbose=False):
     
     # while q is not empty
     while q:
-        print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+        print('=========Next item on the queue=========')
         # if there are no nodes for expansion then return failure
         if q.empty():
-            return 'failure'
+            return path
         
-        #pop the first node from the queue
+        #pop the node from the queue
         node = q.get()
 
-        # if node contains goal state then return solution
-        if issolved(rw, rw.getState(), path):
-            return path
-
-        percept = rw.getPercept() # get the contents of the spaces around robby
-        directions = list(percept.keys()) # robby, north, west, east, south
         
+        
+
+        # get the contents of the spaces around robby
+        percept = rw.getPercept() 
+        directions = list(percept.keys()) # robby, north, west, east, south
         # for each available action
         for move in directions:
+           
             # for each available action
             # "GNWES"
-            for act in actions:
-                
-                
-                print(move)
-                print(act)
-                nextnode = percept[move] # eg: percept['Robby'] will get the contents of the grid block where robby is sitting
-                # grab cans and batteries
-                
-                if move == "Robby" and (nextnode == "C" or nextnode == "B"):
-                    print('ROBBY IS GRABBING GGGGGGGGGGGGGGGGGGGGGGG')
-                    # append grab bc there is something to grab
-                    # he has not moved since he grabbed
-                    if isvalid(rw, state, node[2]):
-                        q.put((rw.robbyRow, rw.robbyCol, node[2] + "G"))
-                        visited_nodes.append((rw.robbyRow, rw.robbyCol))
-                        rw.grid[rw.RobbyRow][rw.RobbyRow] = "E"
+            # Each "move" value (from getPercept()) corresponds to a letter. The letter value (act) is understood by "path"
+            act = ''
+            if move == "North":
+                act = 'N'
+            elif move == "West":
+                act = "W"
+            elif move == "East":
+                act = "E"
+            elif move == "South":
+                act = "S"
+            else:
+                act = "G"
+            
 
-                else:
-                    if isvalid(rw, state, node[2]):
-                        # move the robby's coordinates and put him on the queue for moving
-                        q.put((rw.robbyRow, rw.robbyCol, node[2] + act))
-                        visited_nodes.append((rw.robbyRow, rw.robbyCol))
-                        rr0 = rw.robbyRow
-                        rc0 = rw.robbyCol
-                        if act == "N":
-                            rc0 += 1
-                        elif act == "E":
-                            rr0 += 1
-                        elif act == "S":
-                            rc0 -= 1
-                        elif act == "W":
-                            rr0 -= 1
+            print("move =" + move)
+            print("act =" + act)
+
+
+             # assign coordinates for if the next move will be a cardinal direction move
+            rr0 = rw.robbyRow
+            rc0 = rw.robbyCol
+            if act == "N":
+                rc0 += 1
+            elif act == "E":
+                rr0 += 1
+            elif act == "S":
+                rc0 -= 1
+            elif act == "W":
+                rr0 -= 1
+
+
+            print("Current coords:")
+            print(rr0, rc0)
+            nextnode = percept[move] # eg: percept['Robby'] will get the contents of the grid block where robby is sitting
+            # grab cans and batteries
+            print("nextnode contents = " + nextnode)
+            
+            if move == "Robby" and (nextnode == "C" or nextnode == "B"):
+                print('ROBBY IS GRABBING')
+                # append grab bc there is something to grab
+                # he has not moved since he grabbed
+                if isvalid(rw, state, node[2]):
+                    q.put((rw.robbyRow, rw.robbyCol, node[2] + "G"))
+                    visited_nodes.append((rw.robbyRow, rw.robbyCol))
+                    rw.grid[rw.RobbyRow][rw.RobbyRow] = "E"
+
+            else:
+                if isvalid(rw, state, node[2]):
+                    print("--This move is valid.--")
+                    # move the robby's coordinates and put him on the queue for moving
+                    # q.put((rw.robbyRow, rw.robbyCol, node[2] + act))
+                    # visited_nodes.append((rw.robbyRow, rw.robbyCol))
+                    
+                    
+                    # if the visited nodes list contains the tuple of coordinates that we are trying to move to
+                    if ((rr0, rc0) in visited_nodes):
+                        print("rr0, rc0 in visited nodes")
                         
-                        # if the visited nodes list contains the tuple of coordinates that we are trying to move to
-                        if ((rr0, rc0) in visited_nodes):
-                                print()
-                                continue
-                        else:
-                            q.put((rr0, rc0, node[2] + act))
-                            visited_nodes.append((rr0, rc0))
+                        continue
+                    else:
+                        print("putting into the q:")
+                        print(node[2] + act)
+                        q.put((rr0, rc0, node[2] + act))
+                        visited_nodes.append((rr0, rc0))
 
-                
-                path = node[2]
-                cnt += 1
-                if cnt == 10:
-                    return "sob"
-                if verbose: print('--> searched {} paths'.format(cnt))
-
+            print()
+            # if node contains goal state then return solution
+            if issolved(rw, rw.getState(), path):
+                print("is solved line 176")
+                return path
+            print("path:")
+            print(path)
+            print()
+            cnt += 1
+            if cnt == 20:
+                return "sob"
+            if verbose: print('--> searched {} paths'.format(cnt))
+            print('===== end path =====')
+        #End, put next item on the queue
                     
 
     if verbose: print('--> searched {} paths'.format(cnt))
