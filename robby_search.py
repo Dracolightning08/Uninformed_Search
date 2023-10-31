@@ -158,7 +158,7 @@ def bfs(rw, state, actions, verbose=False):
 
     # add starting node to queue
     # Each node is represented by a tuple (of coordinates)
-    q.put((rw.robbyRow, rw.robbyCol, 'R'))
+    q.put((rw.robbyRow, rw.robbyCol, ''))
     visited_nodes.append((rw.robbyRow, rw.robbyCol))
     
     # while q is not empty
@@ -166,10 +166,13 @@ def bfs(rw, state, actions, verbose=False):
         print('=========Next item on the queue=========')
         # if there are no nodes for expansion then return failure
         if q.empty():
+            print("oh no q is empty")
             return path
         
         #pop the node from the queue
         node = q.get()
+        print("node's string " + node[2])
+        print("===")
 
         
         
@@ -178,7 +181,11 @@ def bfs(rw, state, actions, verbose=False):
         percept = rw.getPercept() 
         directions = list(percept.keys()) # robby, north, west, east, south
         # for each available action
+        ogr = rw.robbyRow #keep a record of the initial robby location
+        ogc = rw.robbyCol
         for move in directions:
+            rr0 = ogr
+            rc0 = ogc
            
             # for each available action
             # "GNWES"
@@ -201,35 +208,34 @@ def bfs(rw, state, actions, verbose=False):
 
 
              # assign coordinates for if the next move will be a cardinal direction move
-            rr0 = rw.robbyRow
-            rc0 = rw.robbyCol
             if act == "N":
-                rc0 += 1
-            elif act == "E":
                 rr0 += 1
+            elif act == "E":
+                rc0 += 1
             elif act == "S":
-                rc0 -= 1
-            elif act == "W":
                 rr0 -= 1
+            elif act == "W":
+                rc0 -= 1
 
 
-            print("Current coords:")
-            print(rr0, rc0)
+           
             nextnode = percept[move] # eg: percept['Robby'] will get the contents of the grid block where robby is sitting
             # grab cans and batteries
             print("nextnode contents = " + nextnode)
+            print("Current coords:")
+            print(rr0, rc0)
             
             if move == "Robby" and (nextnode == "C" or nextnode == "B"):
                 print('ROBBY IS GRABBING')
                 # append grab bc there is something to grab
                 # he has not moved since he grabbed
-                if isvalid(rw, state, node[2]):
+                if isvalid(rw, state, node[2] + act):
                     q.put((rw.robbyRow, rw.robbyCol, node[2] + "G"))
                     visited_nodes.append((rw.robbyRow, rw.robbyCol))
                     rw.grid[rw.RobbyRow][rw.RobbyRow] = "E"
 
             else:
-                if isvalid(rw, state, node[2]):
+                if isvalid(rw, state, node[2] + act):
                     print("--This move is valid.--")
                     # move the robby's coordinates and put him on the queue for moving
                     # q.put((rw.robbyRow, rw.robbyCol, node[2] + act))
@@ -246,15 +252,11 @@ def bfs(rw, state, actions, verbose=False):
                         print(node[2] + act)
                         q.put((rr0, rc0, node[2] + act))
                         visited_nodes.append((rr0, rc0))
-
-            print()
+            
             # if node contains goal state then return solution
-            if issolved(rw, rw.getState(), path):
+            if issolved(rw, rw.getState(), node[2]):
                 print("is solved line 176")
-                return path
-            print("path:")
-            print(path)
-            print()
+                return node[2]
             cnt += 1
             if cnt == 20:
                 return "sob"
@@ -305,30 +307,34 @@ def isvalid(rw, state, path):
     for action in path:
         #convert action
         if action == "N":
-            action = 'North'
+            row += 1
         elif action == "E":
-            action = 'East'
+            col +=1
         elif action == "S":
-            action = 'South'
+            row -= 1
         elif action == "W":
-            action = "West"
-        else:
-            continue
+            col -=1
     
         # Path is invalid if Robby has run out of battery
         if rw.batteryLife <= 0: # ***EDIT CODE HERE***
+            print("     dead battery")
             return False
 
         # Path is invalid if Robby's goes "out of bounds"
+        print("                 is valid method:")
+        print(row, col)
         if row > rows or row < 0 or col > cols or col < 0: # ***EDIT CODE HERE***
+            print("     out of bounds")
             return False
 
         # Path is invalid if Robby runs into a wall
-        if rw.getPercept()[action] == 'W': # ***EDIT CODE HERE***
+        if rw.grid[row][col] == 'W': # ***EDIT CODE HERE***
+            print("      wall")
             return False
 
         # Path is invalid if robby repeats a state in memory
         if (row, col, "".join(state)) in memory:
+            print("     position in memory")
             return False
         memory.append((row, col, "".join(state)))  # add the new state to memory
 
