@@ -121,7 +121,7 @@ def main(file, actions, battery, verbose):
             elif key == "b": # BFS
                 print('Running breadth-first search...', end='')
                 time.sleep(0.5)
-                path = bfs(rw, contents, actions, verbose=verbose)
+                path = BFS(rw, 7)
                 if len(path) > 0:
                     print(path)
                 else:
@@ -133,212 +133,208 @@ def main(file, actions, battery, verbose):
                 rw.reset()
                 rw.goto(r0, c0)
                 time.sleep(0.5)
-                bfs(rw, rw.getState(), actions, verbose=True)
+                # print(type(rw))
+                path = BFS(rw, 7)
+                # Reset again after the search
+                rw.reset()
+                rw.goto(r0, c0)
+                if path != "F":
+                    # If path is not a failure
+                    for action in path:
+                        # if letter is N
+                        # moveNorth()
+                        if action == "N":
+                            rw.north()
+                        elif action == "S":
+                            rw.south()
+                        elif action == "W":
+                            rw.west()
+                        elif action == "E":
+                            rw.east()
+                        elif action == "G":
+                            rw.grab()
+                        time.sleep(0.5)
+                        print(action)
+                    # print(path)
 
-                # ***EDIT CODE HERE***
-                # this is part (h) on the hw document
-                for action in path:
-                    # if letter is N
-                    # moveNorth()
-                    pass
+                else:
+                    print("No path found")
 
-'''-------------------------------------------------------------------------------------------------------------------------------------------------------
-                                                    Breadth First Search Method :
---------------------------------------------------------------------------------------------------------------------------------------------------------'''
-def bfs(rw, state, actions, verbose=False):
-    '''Perform breadth-first search on the world state given an ordered string of actions to check (e.g. 'GNESW').'''
-    #***EDIT CODE HERE*** part e
-    cnt = 0 # counter to see how long the search took
-    path = '' # initialize the path string
-    
-    # initialize the queue
-    q = Queue()
-    # list of visited nodes
-    visited_nodes = []
+from robby.__init__ import World
+#This is here for autofill
+def convertDir(dir, row, col):
+    if dir == "N":
+        return (row - 1, col)
+    if dir == "S":
+        return (row + 1, col)
+    if dir == "E":
+        return (row, col + 1)
+    if dir == "W":
+        return (row, col - 1)
+    return (row, col)
+# dirOptions = ["N", "S", "E", "W", "G"]
+def checkDirections(rw: World, QZero : tuple, maxBattery : int):
+    dirOptions = ["N", "S", "E", "W"]
+    dirOptionsFull = {"N": "North", "S": "South", "E": "East", "W": "West", "G": "Robby"}
 
-    # add starting node to queue
-    # Each node is represented by a tuple (of coordinates)
-    q.put((rw.robbyRow, rw.robbyCol, ''))
-    visited_nodes.append((rw.robbyRow, rw.robbyCol))
-    
-    # while q is not empty
-    while q:
-        print('=========Next item on the queue=========')
-        # if there are no nodes for expansion then return failure
-        if q.empty():
-            print("oh no q is empty")
-            return path
-        
-        #pop the node from the queue
-        node = q.get()
-        print("node's string " + node[2])
-        print("===")
+    finalOptions = []
+    startBattery = QZero[3] - 1
+    startCans = QZero[4]
+    grab = ""
+    # print("Checking directions", rw.getPercept()["Robby"], rw.getCurrentPosition())
+    rw.goto(QZero[1], QZero[2])
+    if startBattery <= 0:
+        # Out of battery check
+        # print("Ran out of battery", QZero[0])
+        return []
+    # print(rw.getCurrentPosition())
+    batteryBattery = 0
+    batteryOption = False
+    if  rw.getPercept()["Robby"] == "B":
+        # If the starting position is a battery and youre grabbing it
+        # print("Grabbed a battery", rw.getCurrentPosition())
+        batteryBattery = maxBattery #The battery if we grab the battery
+        batteryOption = True
+        # startBattery = maxBattery
+        grab = "G"
+    elif rw.getPercept()["Robby"] == "C":
+        # If the starting position is a can and youre grabbing it
+        # print(QZero[0])
+        # print("Grabbed a can", startCans + 1, "/", rw.getCansRemaining(), "Position: ", rw.getCurrentPosition())
+        startCans += 1
+        startBattery -= 1
+        grab = "G"
+        if (startCans == rw.getCansRemaining()):
+            # print("Found all cans")
+            return True, QZero[0] + "G"
+        # print(startBattery, QZero[0])
+        if startBattery <= 0:
+            # Out of battery check
+            # print("Ran out of battery")
+            return []
+    for dir in dirOptions:
+        cans = startCans
+        battery = startBattery
+        # print(QZero[0], dir)
+        # print(dir)
 
-        
-        
+        # Setting up Q requires running dirOptions at base
 
-        # get the contents of the spaces around robby
-        percept = rw.getPercept() 
-        directions = list(percept.keys()) # robby, north, west, east, south
-        # for each available action
-        ogr = rw.robbyRow #keep a record of the initial robby location
-        ogc = rw.robbyCol
-        for move in directions:
-            rr0 = ogr
-            rc0 = ogc
-           
-            # for each available action
-            # "GNWES"
-            # Each "move" value (from getPercept()) corresponds to a letter. The letter value (act) is understood by "path"
-            act = ''
-            if move == "North":
-                act = 'N'
-            elif move == "West":
-                act = "W"
-            elif move == "East":
-                act = "E"
-            elif move == "South":
-                act = "S"
+        row, col = convertDir(dir, QZero[1], QZero[2])
+        # print((x, y))
+
+
+        KnownPos : list = QZero[5].copy()
+        # failed = False
+        # print("A")
+        if row >= rw.numRows or col >= rw.numCols or col < 0 or row < 0:
+            # Out of bounds check
+            # print("Went out of bounds",QZero[0] + dir, row,col)
+            continue
+        # print("B")
+        if rw.getPercept()[dirOptionsFull[dir]] == "W":
+            # Wall check
+            # print(QZero[0])
+            # print("Tried to walk into a wall", rw.getPercept()[dirOptionsFull[dir]], dir, (row, col))
+            continue
+        # print("C")
+        shouldAvoidGrabbing = False
+        if battery <= 0 and not batteryOption:
+            # Out of battery check
+            # print("Ran out of battery")
+            continue
+
+        elif battery <= 0:
+            # If you have no battery and grabbing a battery is an option always take it
+            shouldAvoidGrabbing = True
+
+        # print("D")
+        if (row, col) in KnownPos:
+            # print("XY: ", (row,col), " KnownPos: ", KnownPos)
+            # Double back check
+            # print("Went to same position twice")
+            continue
+        # print("E")
+        KnownPos.append(rw.getCurrentPosition())
+        # print("Direction good")
+        # Check path without battery first, its lower cost
+        if(batteryOption):
+            # print("Adding not grabbing battery")
+            finalOptions.append((QZero[0] + dir, row, col, battery, cans, KnownPos))
+        if not shouldAvoidGrabbing:
+            # Basically if battery was empty without grabbing battery ignore this path
+            if batteryOption:
+                finalOptions.append((QZero[0] + grab + dir, row, col, batteryBattery, cans, KnownPos))
             else:
-                act = "G"
-            
-
-            print("move =" + move)
-            print("act =" + act)
+                finalOptions.append((QZero[0] + grab + dir, row, col, battery, cans, KnownPos))
 
 
-             # assign coordinates for if the next move will be a cardinal direction move
-            if act == "N":
-                rr0 += 1
-            elif act == "E":
-                rc0 += 1
-            elif act == "S":
-                rr0 -= 1
-            elif act == "W":
-                rc0 -= 1
 
+    # print( finalOptions)
+    return finalOptions
 
-           
-            nextnode = percept[move] # eg: percept['Robby'] will get the contents of the grid block where robby is sitting
-            # grab cans and batteries
-            print("nextnode contents = " + nextnode)
-            print("Current coords:")
-            print(rr0, rc0)
-            
-            if move == "Robby" and (nextnode == "C" or nextnode == "B"):
-                print('ROBBY IS GRABBING')
-                # append grab bc there is something to grab
-                # he has not moved since he grabbed
-                if isvalid(rw, state, node[2] + act):
-                    q.put((rw.robbyRow, rw.robbyCol, node[2] + "G"))
-                    visited_nodes.append((rw.robbyRow, rw.robbyCol))
-                    rw.grid[rw.RobbyRow][rw.RobbyRow] = "E"
+def BFS(rw : World, maxBattery):
+    dirOptions = ["N", "S", "E", "W"]
+    dirOptionsFull = {"N": "North", "S": "South", "E": "East", "W": "West", "G": "Robby"}
+    # Lets set up Q:
+    # Q follows the following format:
+    # [(dir, x, y, battery, cans, [knownPos])]
+    Q = []
+    grab = ""
+    battery = maxBattery
+    cans = 0
+    startX, startY = rw.getCurrentPosition()
+    if rw.getPercept()["Robby"] == "C":
+        # Started on a can
+        # print("Started on a can", rw.getCurrentPosition())
+        grab = "G"
+        battery -= 1
+        cans = 1
+    elif rw.getPercept()["Robby"] == "B":
+        # Started on a battery
+        # Who cares, would cost extra to grab and no change in overall points
+        grab = ""
+    for dir in dirOptions:
+        # Setting up Q requires running dirOptions at base
+        row, col = convertDir(dir, startX, startY)
+        # battery = maxBattery - 1
+        # cans = 0
+        if row >= rw.numRows or col >= rw.numCols or col < 0 or row < 0:
+            # Out of bounds check
+            continue
+        if rw.getPercept()[dirOptionsFull[dir]] == "W":
+            # Wall check
+            continue
+        # print(row,col)
+        rw.goto(row, col)
+        # failed = False
+        Q.append((grab + dir, row, col, battery, cans, [(startX,startY)]))
+    # Initial q is the same as the options
 
-            else:
-                if isvalid(rw, state, node[2] + act):
-                    print("--This move is valid.--")
-                    # move the robby's coordinates and put him on the queue for moving
-                    # q.put((rw.robbyRow, rw.robbyCol, node[2] + act))
-                    # visited_nodes.append((rw.robbyRow, rw.robbyCol))
-                    
-                    
-                    # if the visited nodes list contains the tuple of coordinates that we are trying to move to
-                    if ((rr0, rc0) in visited_nodes):
-                        print("rr0, rc0 in visited nodes")
-                        
-                        continue
-                    else:
-                        print("putting into the q:")
-                        print(node[2] + act)
-                        q.put((rr0, rc0, node[2] + act))
-                        visited_nodes.append((rr0, rc0))
-            
-            # if node contains goal state then return solution
-            if issolved(rw, rw.getState(), node[2]):
-                print("is solved line 176")
-                return node[2]
-            cnt += 1
-            if cnt == 20:
-                return "sob"
-            if verbose: print('--> searched {} paths'.format(cnt))
-            print('===== end path =====')
-        #End, put next item on the queue
-                    
+    while len(Q) != 0:
+        # While Q isn't empty
+        # knownPos = Q[0][5]
+        # print(Q)
+        # print(Q[0][5])
+        cansFound = Q[0][4]
+        if cansFound == rw.getCansRemaining(): #Since we aren't actually picking up any cans while we simulate the motion, this will always be all the cans
+            # Grabbed all the cans
+            return Q[0][0]
+        # print(Q[0])
+        # char = Q[0][0][-1] # Final character
+        options = checkDirections(rw, Q[0], maxBattery)
+        if options != []:
+            if(options[0] == True):
+                # This is a weird way of doing things
+                return options[1]
 
-    if verbose: print('--> searched {} paths'.format(cnt))
-
-    return path
-'''-------------------------------------------------------------------------------------------------------------------------------------------------------
-                                                    Is Solved Method:
---------------------------------------------------------------------------------------------------------------------------------------------------------'''
-def issolved(rw, state, path):
-    '''Check whether a series of actions (path) taken in Robby's world results in a solved problem.'''
-    # part f
-    rows, cols = rw.numRows, rw.numCols # size of the world
-    row, col = rw.getCurrentPosition() # Robby's current (starting) position
-    state = list(state) # convert the string to a list so we can update it
-    battery = rw.fullBattery
-
-    #***EDIT CODE HERE***
-    for action in path:
-
-        # Did Robby run out of battery?
-        if rw.batteryLife <= 0:
-            return False
-
-        # Did Robby grab all the cans?
-        if state.count("C") == 0:
-            return True
-
-    return False # if we made it this far, we did not complete the goal
-'''-------------------------------------------------------------------------------------------------------------------------------------------------------
-                                                    Is Valid Method:
---------------------------------------------------------------------------------------------------------------------------------------------------------'''
-def isvalid(rw, state, path):
-    '''Check whether a series of actions (path) taken in Robby's world is valid.'''
-    # part g
-    rows, cols = rw.numRows, rw.numCols  # size of the maze
-    row, col = rw.getCurrentPosition()  # robby's current (starting) position
-    state = list(state)
-    memory = []  # keep track of where robby has been to prohibit "loops"
-    battery = rw.fullBattery
-
-    #***EDIT CODE HERE***
-    for action in path:
-        #convert action
-        if action == "N":
-            row += 1
-        elif action == "E":
-            col +=1
-        elif action == "S":
-            row -= 1
-        elif action == "W":
-            col -=1
-    
-        # Path is invalid if Robby has run out of battery
-        if rw.batteryLife <= 0: # ***EDIT CODE HERE***
-            print("     dead battery")
-            return False
-
-        # Path is invalid if Robby's goes "out of bounds"
-        print("                 is valid method:")
-        print(row, col)
-        if row > rows or row < 0 or col > cols or col < 0: # ***EDIT CODE HERE***
-            print("     out of bounds")
-            return False
-
-        # Path is invalid if Robby runs into a wall
-        if rw.grid[row][col] == 'W': # ***EDIT CODE HERE***
-            print("      wall")
-            return False
-
-        # Path is invalid if robby repeats a state in memory
-        if (row, col, "".join(state)) in memory:
-            print("     position in memory")
-            return False
-        memory.append((row, col, "".join(state)))  # add the new state to memory
-
-    return True  # if we made it this far, the path is valid
+        Q.extend(options)
+        Q.pop(0)
+        # Pop the first part, knowing the path didn't find everything
+    # print("No path found")
+    # rw.goto(1,1)
+    # print(rw.getCurrentPosition())
+    return "F"
 
 if __name__ == '__main__':
     args = parser.parse_args()

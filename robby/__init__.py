@@ -244,9 +244,9 @@ class World(GraphWin):
         for r in range(self.numRows):
             for c in range(self.numCols):
                 if r == self.robbyRow and c == self.robbyCol:
-                    state += "R" + self.grid[r][c].contents
+                    state += "R"
                 else:
-                    state += self.grid[r][c].contents + " "
+                    state += "E"  # For empty cells
         return state
 
     def goto(self, row, col):
